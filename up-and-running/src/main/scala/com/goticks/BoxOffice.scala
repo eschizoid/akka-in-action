@@ -43,7 +43,7 @@ class BoxOffice(implicit timeout: Timeout) extends Actor {
 
     case GetTickets(event, tickets) =>
       def notFound(): Unit           = sender() ! TicketSeller.Tickets(event)
-      def buy(child: ActorRef): Unit = child.forward(TicketSeller.Buy(tickets))
+      def buy(child: ActorRef): Unit = child forward TicketSeller.Buy(tickets)
       context.child(event).fold(notFound())(buy)
 
     case GetEvent(event) =>
@@ -55,18 +55,17 @@ class BoxOffice(implicit timeout: Timeout) extends Actor {
       import akka.pattern.{ask, pipe}
 
       def getEvents = context.children.map { child =>
-        self
-          .ask(GetEvent(child.path.name))
-          .mapTo[Option[Event]]
+        self.ask(GetEvent(child.path.name)).mapTo[Option[Event]]
       }
+
       def convertToEvents(f: Future[Iterable[Option[Event]]]) =
         f.map(_.flatten).map(l => Events(l.toVector))
 
       pipe(convertToEvents(Future.sequence(getEvents))) to sender()
 
     case CancelEvent(event) =>
-      def notFound()                   = sender() ! None
-      def cancelEvent(child: ActorRef) = child forward TicketSeller.Cancel
+      def notFound(): Unit                   = sender() ! None
+      def cancelEvent(child: ActorRef): Unit = child forward TicketSeller.Cancel
       context.child(event).fold(notFound())(cancelEvent)
   }
 }
