@@ -12,9 +12,8 @@ class SilentActor extends Actor {
   var internalState: Vector[String] = Vector[String]()
 
   override def receive: PartialFunction[Any, Unit] = {
-    case SilentMessage(data) =>
-      internalState = internalState :+ data
-    case GetState(receiver) => receiver ! internalState
+    case SilentMessage(data) => internalState = internalState :+ data
+    case GetState(receiver)  => receiver ! internalState
   }
 
   def state: Vector[String] = internalState
